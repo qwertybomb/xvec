@@ -27,4 +27,5 @@ int main() {
     }
     printf("%d\n",t[31]);
     xvec_free(v);
+    xvec_free(t);
 }
