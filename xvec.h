@@ -62,9 +62,9 @@ static inline size_t xvec_cap(void* v) {
     size_t* _cap = xvec_cap_ptr(v);                  \
     if(_size > *_len) {                              \
         xvec_reserve(v,_size);                       \
+        _len = xvec_len_ptr(v);                      \
         /*clear memory after resizing*/              \
         memset(v+*_len,0, (*_cap-*_len)*sizeof(*v)); \
-        _len = xvec_len_ptr(v);                      \
     }                                                \
     *_len = _size;                                   \
     v;                                               \

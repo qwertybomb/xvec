@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main() {
-    int *v = xvec_new(int,9765);
+    int *v = xvec_new(int,987654321);
     xvec_push(v, 1);
     xvec_push(v, 1);
     xvec_push(v, 1, 7, 8, 9, 10, 11);
