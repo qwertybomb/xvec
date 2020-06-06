@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+/*needed for increasing capacity*/
 static inline size_t upper_power_of_two(size_t v) {
     v--;
     v |= v >> 1;
@@ -13,12 +13,13 @@ static inline size_t upper_power_of_two(size_t v) {
     v |= v >> 8;
     v |= v >> 16;
     //only needed for 64 bit mode
-    if (sizeof(size_t) == 8) v |= v >> 32;
+    if (sizeof (size_t) == 8) v |= v >> 32;
+
     v++;
     return v;
 }
 
-#define xvec_base struct { size_t cap, len; }
+typedef struct xvec_base { size_t cap, len; } xvec_base;
 #define XVEC_ALEN(a) (sizeof(a) / sizeof(*a))
 
 static inline size_t *xvec_len_ptr(void *v) {
@@ -38,23 +39,22 @@ static inline size_t xvec_cap(void* v) {
 /* how to use
  * T = type
  * ... = items to initialize the array with
- */
-#define xvec_new(T, ...)                                                  \
-({                                                                        \
-    const T __args[] = {__VA_ARGS__};                                     \
-    const  size_t initial_size = 16+XVEC_ALEN(__args);                    \
-    xvec_base *_v = malloc(sizeof(xvec_base) + sizeof(T) * initial_size); \
-    _v->cap = initial_size;                                               \
-    _v->len = XVEC_ALEN(__args);                                          \
-    T* v = (T*)(_v+1);                                                    \
-    for(size_t i =0; i < _v->len; ++i)                                    \
-        v[i] = __args[i];                                                 \
-    v;                                                                    \
-})                                                                        \
+*/
+#define xvec_new(T, ...)                                                              \
+({                                                                                    \
+    const T __args[] = {__VA_ARGS__};                                                 \
+    const  size_t initial_size = 16+XVEC_ALEN(__args);                                \
+    xvec_base *_v = (xvec_base*)malloc(sizeof(xvec_base) + sizeof(T) * initial_size); \
+    _v->cap = initial_size;                                                           \
+    _v->len = XVEC_ALEN(__args);                                                      \
+    T* v = (T*)(_v+1);                                                                \
+    memcpy(v,__args,sizeof(__args));                                                  \
+    v;                                                                                \
+})                                                                                    \
 /* how to use
  * v = container
  * size = the size to resize to
- */
+*/
 #define xvec_resize(v, size)                         \
 ({                                                   \
     const size_t _size = size;                       \
@@ -70,15 +70,15 @@ static inline size_t xvec_cap(void* v) {
     v;                                               \
 })
 
-#define xvec_reserve(v, size)                                                                  \
-({                                                                                             \
-    const size_t s = size;                                                                     \
-    size_t* _cap = xvec_cap_ptr(v);                                                            \
-    if(s > *_cap) {                                                                            \
-        *_cap = s;                                                                             \
-        v = realloc((xvec_base*)v-1,sizeof(xvec_base) + sizeof(*v)*(*_cap))+sizeof(xvec_base); \
-    }                                                                                          \
-    v;                                                                                         \
+#define xvec_reserve(v, size)                                                                                          \
+({                                                                                                                     \
+    const size_t s = size;                                                                                             \
+    size_t* _cap = xvec_cap_ptr(v);                                                                                    \
+    if(s > *_cap) {                                                                                                    \
+        *_cap = s;                                                                                                     \
+        v = (__typeof__(v))((char*)realloc((xvec_base*)v-1,sizeof(xvec_base) + sizeof(*v)*(*_cap))+sizeof(xvec_base)); \
+    }                                                                                                                  \
+    v;                                                                                                                 \
 })
 
 #define xvec_free(v) free((xvec_base*)v-1)
@@ -88,7 +88,7 @@ static inline size_t xvec_cap(void* v) {
 /*how to use
  * v = container
  * ... = items to insert
- */
+*/
 #define xvec_push(v, ...)                                           \
 ({                                                                  \
     const __typeof__(*v) __args[] = {__VA_ARGS__};                  \
@@ -108,7 +108,7 @@ static inline size_t xvec_cap(void* v) {
  * v = container
  * index = where to insert
  * ... = items to insert
- */
+*/
 #define xvec_insert(v, index, ...)                                  \
 ({                                                                  \
     const size_t _n = index;                                        \
@@ -129,7 +129,7 @@ static inline size_t xvec_cap(void* v) {
 /* how to use
  * v = container
  * index = where to remove
- */
+*/
 #define xvec_remove(v, index)                              \
 ({                                                         \
     const size_t _index = index;                           \
@@ -142,7 +142,7 @@ static inline size_t xvec_cap(void* v) {
  * v = container
  * first = the first item to be removed
  * last = the last item to be removed
- */
+*/
 #define xvec_remove_range(v, first, last)                \
 ({                                                       \
     const size_t _first = first;                         \
@@ -153,4 +153,16 @@ static inline size_t xvec_cap(void* v) {
     *_len-=_n;                                           \
     v;                                                   \
 })
+
+/* how to use
+ * v = container
+*/
+#define xvec_copy(v)                              \
+({                                                \
+    __typeof__(v) new_xvec = xvec_new(typeof(v)); \
+    xvec_resize(new_xvec,xvec_len(v));            \
+    memcpy(new_xvec,v,xvec_len(v)*sizeof(*v));    \
+    new_xvec;                                     \
+})
+
 #endif //XVEC_C_XVEC_H

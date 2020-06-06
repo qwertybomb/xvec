@@ -1,7 +1,8 @@
 #include "xvec.h"
 #include <stdio.h>
+
 int main() {
-    int *v = xvec_new(int);
+    int *v = xvec_new(int,9765);
     xvec_push(v, 1);
     xvec_push(v, 1);
     xvec_push(v, 1, 7, 8, 9, 10, 11);
@@ -18,10 +19,12 @@ int main() {
     xvec_reserve(v,70);
     xvec_resize(v,3453);
     xvec_resize(v,32);
-    xvec_pop(v);
+    int* t= xvec_copy(v);
+    t[31] = -1;
     printf("%zu\n", xvec_cap(v));
     for (int i = 0; i < xvec_len(v); ++i) {
         printf("%d\n", v[i]);
     }
+    printf("%d\n",t[31]);
     xvec_free(v);
 }
